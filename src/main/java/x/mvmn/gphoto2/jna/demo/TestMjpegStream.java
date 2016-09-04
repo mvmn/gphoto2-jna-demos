@@ -1,4 +1,4 @@
-package x.mvmn.gphoto2.jna.tmp;
+package x.mvmn.gphoto2.jna.demo;
 
 import java.io.IOException;
 import java.io.OutputStream;
