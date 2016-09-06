@@ -50,6 +50,7 @@ public class TestMjpegStream {
 
 				Executors.newWorkStealingPool();
 				final int cpuCoresCount = Runtime.getRuntime().availableProcessors();
+				System.out.println("CPU cores: " + cpuCoresCount);
 				final Thread[] threads = new Thread[cpuCoresCount];
 				for (int i = 0; i < cpuCoresCount; i++) {
 					final Thread thread = new Thread() {
