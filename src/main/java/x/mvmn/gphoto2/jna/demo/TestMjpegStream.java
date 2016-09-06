@@ -49,7 +49,7 @@ public class TestMjpegStream {
 				final OutputStream outputStream = response.getOutputStream();
 
 				Executors.newWorkStealingPool();
-				final int cpuCoresCount = Runtime.getRuntime().availableProcessors();
+				final int cpuCoresCount = Runtime.getRuntime().availableProcessors() * 2;
 				System.out.println("CPU cores: " + cpuCoresCount);
 				final Thread[] threads = new Thread[cpuCoresCount];
 				for (int i = 0; i < cpuCoresCount; i++) {
