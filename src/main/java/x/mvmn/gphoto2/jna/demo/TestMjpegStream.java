@@ -44,35 +44,49 @@ public class TestMjpegStream {
 			public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 				response.setContentType("multipart/x-mixed-replace; boundary=--BoundaryString");
 				final OutputStream outputStream = response.getOutputStream();
-				byte[] jpeg;
-				while (true) {
-					PointerByReference cameraFile = null;
-					try {
-						cameraFile = TestSwingLiveView.capturePreview(camera, context);
-						jpeg = TestSwingLiveView.getCameraFileData(cameraFile, camera, context);
 
-						// write the image and wrapper
-						outputStream.write(prefix);
-						outputStream.write(String.valueOf(jpeg.length).getBytes());
-						outputStream.write(separator);
-						outputStream.write(jpeg);
-						outputStream.write(separator);
-						outputStream.flush();
-						System.gc();
-						Thread.yield();
-					} catch (Exception e) {
-						e.printStackTrace();
-						break;
-					} finally {
-						if (cameraFile != null) {
-							try {
-								TestSwingLiveView.freeCameraFile(cameraFile);
-							} catch (Throwable t) {
-								t.printStackTrace();
+				final Object LOCK_OBJECT_CAPTURE = new Object();
+				final Object LOCK_OBJECT_WRITE = new Object();
+				for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
+					new Thread() {
+						public void run() {
+							byte[] jpeg;
+							while (true) {
+								PointerByReference cameraFile = null;
+								try {
+									synchronized (LOCK_OBJECT_CAPTURE) {
+										cameraFile = TestSwingLiveView.capturePreview(camera, context);
+									}
+									jpeg = TestSwingLiveView.getCameraFileData(cameraFile, camera, context);
+
+									synchronized (LOCK_OBJECT_WRITE) {
+										// write the image and wrapper
+										outputStream.write(prefix);
+										outputStream.write(String.valueOf(jpeg.length).getBytes());
+										outputStream.write(separator);
+										outputStream.write(jpeg);
+										outputStream.write(separator);
+									}
+									outputStream.flush();
+									System.gc();
+									Thread.yield();
+								} catch (Exception e) {
+									e.printStackTrace();
+									break;
+								} finally {
+									if (cameraFile != null) {
+										try {
+											TestSwingLiveView.freeCameraFile(cameraFile);
+										} catch (Throwable t) {
+											t.printStackTrace();
+										}
+									}
+								}
 							}
 						}
-					}
+					}.start();
 				}
+
 			}
 		}), "/stream.mjpeg");
 
