@@ -58,9 +58,9 @@ public class TestMjpegStream {
 							while (true) {
 								PointerByReference cameraFile = null;
 								try {
-									synchronized (LOCK_OBJECT_CAPTURE) {
-										cameraFile = TestSwingLiveView.capturePreview(camera, context);
-									}
+									// synchronized (LOCK_OBJECT_CAPTURE) {
+									cameraFile = TestSwingLiveView.capturePreview(camera, context);
+									// }
 									byte[] jpeg = TestSwingLiveView.getCameraFileData(cameraFile, camera, context);
 
 									synchronized (LOCK_OBJECT_WRITE) {
