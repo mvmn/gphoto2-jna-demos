@@ -70,8 +70,8 @@ public class TestMjpegStream {
 										outputStream.write(separator);
 										outputStream.write(jpeg);
 										outputStream.write(separator);
+										outputStream.flush();
 									}
-									outputStream.flush();
 									System.gc();
 									Thread.yield();
 								} catch (Exception e) {
