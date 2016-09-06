@@ -2,6 +2,7 @@ package x.mvmn.gphoto2.jna.demo;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 
 import javax.servlet.ServletException;
@@ -22,7 +23,7 @@ public class TestMjpegStream {
 	private static final byte[] prefix = ("--BoundaryString\r\n" + "Content-type: image/jpeg\r\n" + "Content-Length: ").getBytes();
 	private static final byte[] separator = "\r\n\r\n".getBytes();
 
-	private static final Object LOCK_OBJECT_WRITE = new Object();
+	private static final ConcurrentLinkedQueue<byte[]> captures = new ConcurrentLinkedQueue<byte[]>();
 
 	public static void main(String[] args) throws Exception {
 		Server server = new Server(8123);
@@ -49,8 +50,8 @@ public class TestMjpegStream {
 				final OutputStream outputStream = response.getOutputStream();
 
 				Executors.newWorkStealingPool();
-				final int cpuCoresCount = Runtime.getRuntime().availableProcessors() * 2;
-				System.out.println("CPU cores: " + cpuCoresCount);
+				final int cpuCoresCount = Runtime.getRuntime().availableProcessors();
+				System.out.println("Live view capture threads: " + cpuCoresCount);
 				final Thread[] threads = new Thread[cpuCoresCount];
 				for (int i = 0; i < cpuCoresCount; i++) {
 					final Thread thread = new Thread() {
@@ -60,18 +61,8 @@ public class TestMjpegStream {
 								try {
 									cameraFile = TestSwingLiveView.capturePreview(camera, context);
 									byte[] jpeg = TestSwingLiveView.getCameraFileData(cameraFile, camera, context);
-
-									synchronized (LOCK_OBJECT_WRITE) {
-										// write the image and wrapper
-										outputStream.write(prefix);
-										outputStream.write(String.valueOf(jpeg.length).getBytes());
-										outputStream.write(separator);
-										outputStream.write(jpeg);
-										outputStream.write(separator);
-										outputStream.flush();
-									}
-									System.gc();
-									Thread.yield();
+									TestSwingLiveView.freeCameraFile(cameraFile);
+									captures.add(jpeg);
 								} catch (Exception e) {
 									e.printStackTrace();
 									break;
@@ -90,11 +81,27 @@ public class TestMjpegStream {
 					threads[i] = thread;
 					thread.start();
 				}
-				for (final Thread thread : threads) {
+				while (true) {
 					try {
-						thread.join();
-					} catch (InterruptedException e) {
+						byte[] jpeg = captures.poll();
+						if (jpeg != null) {
+							// write the image and wrapper
+							outputStream.write(prefix);
+							outputStream.write(String.valueOf(jpeg.length).getBytes());
+							outputStream.write(separator);
+							outputStream.write(jpeg);
+							outputStream.write(separator);
+							outputStream.flush();
+							System.gc();
+						}
+						Thread.yield();
+					} catch (Exception e) {
 						e.printStackTrace();
+						break;
+					} finally {
+						for (Thread thread : threads) {
+							thread.interrupt();
+						}
 					}
 				}
 			}
