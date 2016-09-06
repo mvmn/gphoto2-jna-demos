@@ -2,6 +2,7 @@ package x.mvmn.gphoto2.jna.demo;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.Executors;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -48,8 +49,11 @@ public class TestMjpegStream {
 				response.setContentType("multipart/x-mixed-replace; boundary=--BoundaryString");
 				final OutputStream outputStream = response.getOutputStream();
 
-				for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
-					new Thread() {
+				Executors.newWorkStealingPool();
+				final int cpuCoresCount = Runtime.getRuntime().availableProcessors();
+				final Thread[] threads = new Thread[cpuCoresCount];
+				for (int i = 0; i < cpuCoresCount; i++) {
+					final Thread thread = new Thread() {
 						public void run() {
 							while (true) {
 								PointerByReference cameraFile = null;
@@ -84,9 +88,17 @@ public class TestMjpegStream {
 								}
 							}
 						}
-					}.start();
+					};
+					threads[i] = thread;
+					thread.start();
 				}
-
+				for (final Thread thread : threads) {
+					try {
+						thread.join();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
 			}
 		}), "/stream.mjpeg");
 
