@@ -126,6 +126,8 @@ public class TestSwingLiveView {
 		return p2CamByRef[0];
 	}
 
+	private static final Object LOCK_OBJECT_CAPTURE = new Object();
+
 	public static PointerByReference capturePreview(Camera camera, PointerByReference context) {
 		PointerByReference pbrFile = new PointerByReference();
 		{
@@ -134,7 +136,9 @@ public class TestSwingLiveView {
 			pFile.setPointer(pbrFile.getValue());
 			pbrFile = pFile;
 		}
-		check(Gphoto2Library.INSTANCE.gp_camera_capture_preview(camera, pbrFile, context));
+		synchronized (LOCK_OBJECT_CAPTURE) {
+			check(Gphoto2Library.INSTANCE.gp_camera_capture_preview(camera, pbrFile, context));
+		}
 		return pbrFile;
 	}
 

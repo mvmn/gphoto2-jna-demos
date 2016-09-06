@@ -22,7 +22,6 @@ public class TestMjpegStream {
 	private static final byte[] prefix = ("--BoundaryString\r\n" + "Content-type: image/jpeg\r\n" + "Content-Length: ").getBytes();
 	private static final byte[] separator = "\r\n\r\n".getBytes();
 
-	private static final Object LOCK_OBJECT_CAPTURE = new Object();
 	private static final Object LOCK_OBJECT_WRITE = new Object();
 
 	public static void main(String[] args) throws Exception {
@@ -58,9 +57,7 @@ public class TestMjpegStream {
 							while (true) {
 								PointerByReference cameraFile = null;
 								try {
-									// synchronized (LOCK_OBJECT_CAPTURE) {
 									cameraFile = TestSwingLiveView.capturePreview(camera, context);
-									// }
 									byte[] jpeg = TestSwingLiveView.getCameraFileData(cameraFile, camera, context);
 
 									synchronized (LOCK_OBJECT_WRITE) {
