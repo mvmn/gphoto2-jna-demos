@@ -50,10 +50,11 @@ public class TestMjpegStream {
 				final OutputStream outputStream = response.getOutputStream();
 
 				Executors.newWorkStealingPool();
-				final int cpuCoresCount = Runtime.getRuntime().availableProcessors();
-				System.out.println("Live view capture threads: " + cpuCoresCount);
-				final Thread[] threads = new Thread[cpuCoresCount];
-				for (int i = 0; i < cpuCoresCount; i++) {
+				final int captureThreadCount = Integer
+						.parseInt(System.getProperty("xmvmngp2demo.mjpeg.threads", String.valueOf(Runtime.getRuntime().availableProcessors())));
+				System.out.println("Live view capture threads: " + captureThreadCount);
+				final Thread[] threads = new Thread[captureThreadCount];
+				for (int i = 0; i < captureThreadCount; i++) {
 					final Thread thread = new Thread() {
 						public void run() {
 							while (true) {
