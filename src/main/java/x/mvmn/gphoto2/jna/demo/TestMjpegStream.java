@@ -21,6 +21,9 @@ public class TestMjpegStream {
 	private static final byte[] prefix = ("--BoundaryString\r\n" + "Content-type: image/jpeg\r\n" + "Content-Length: ").getBytes();
 	private static final byte[] separator = "\r\n\r\n".getBytes();
 
+	private static final Object LOCK_OBJECT_CAPTURE = new Object();
+	private static final Object LOCK_OBJECT_WRITE = new Object();
+
 	public static void main(String[] args) throws Exception {
 		Server server = new Server(8123);
 		server.setStopAtShutdown(true);
@@ -45,19 +48,16 @@ public class TestMjpegStream {
 				response.setContentType("multipart/x-mixed-replace; boundary=--BoundaryString");
 				final OutputStream outputStream = response.getOutputStream();
 
-				final Object LOCK_OBJECT_CAPTURE = new Object();
-				final Object LOCK_OBJECT_WRITE = new Object();
 				for (int i = 0; i < Runtime.getRuntime().availableProcessors(); i++) {
 					new Thread() {
 						public void run() {
-							byte[] jpeg;
 							while (true) {
 								PointerByReference cameraFile = null;
 								try {
 									synchronized (LOCK_OBJECT_CAPTURE) {
 										cameraFile = TestSwingLiveView.capturePreview(camera, context);
 									}
-									jpeg = TestSwingLiveView.getCameraFileData(cameraFile, camera, context);
+									byte[] jpeg = TestSwingLiveView.getCameraFileData(cameraFile, camera, context);
 
 									synchronized (LOCK_OBJECT_WRITE) {
 										// write the image and wrapper
