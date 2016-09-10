@@ -132,9 +132,10 @@ public class TestSwingLiveView {
 		PointerByReference pbrFile = new PointerByReference();
 		{
 			check(Gphoto2Library.INSTANCE.gp_file_new(pbrFile));
-			PointerByReference pFile = new PointerByReference();
-			pFile.setPointer(pbrFile.getValue());
-			pbrFile = pFile;
+			// PointerByReference pFile = new PointerByReference();
+			// pFile.setPointer(pbrFile.getValue());
+			// pbrFile = pFile;
+			pbrFile.setPointer(pbrFile.getValue());
 		}
 		synchronized (LOCK_OBJECT_CAPTURE) {
 			check(Gphoto2Library.INSTANCE.gp_camera_capture_preview(camera, pbrFile, context));
